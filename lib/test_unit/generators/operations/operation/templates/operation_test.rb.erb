@@ -1,0 +1,191 @@
+# frozen_string_literal: true
+
+require "test_helper"
+
+# Test based on the following operations:
+#
+# module <%= class_name.pluralize %>
+#   module <%= verb.capitalize %>
+#     class Operation
+#
+#       include Dry::Transaction(container: Register)
+#
+#       step :validate_inputs,   with: "<%= plural_name %>.<%= verb %>.validation"
+#       step :initialize_record, with: "<%= plural_name %>.<%= verb %>.repository"
+#       step :<%= verb %>_record,     with: "<%= plural_name %>.<%= verb %>.action"
+#
+#     end
+#   end
+# end
+#
+# Adapt the test to your operation.
+#
+module <%= class_name.pluralize %>
+  module <%= verb.capitalize %>
+    class OperationTest < ActiveSupport::TestCase
+
+      <%- @reference_parsed_fields.each do |field| -%>
+      def <%= field.name %>
+        @<%= field.name %> ||= create(:<%= field.name %>)
+      end
+
+      <%- end -%>
+      <%- if verb =~ /update|destroy|all/ -%>
+      def record
+        @record ||= create(:<%= singular_name %>)
+      end
+      <%- end -%>
+
+      <%- if verb != "destroy" -%>
+      def schema_attributes
+        <%= class_name.pluralize %>::Base::Schema.key_list + <%= class_name.pluralize %>::<%= verb.capitalize %>::Schema.key_list
+      end
+
+      # This method should return attributes with the keys as symbols.
+      # symbolize_keys
+      def model_attributes
+        # attributes_for(:<%= singular_name %>) # More efficient
+        @model_attributes ||= create(:<%= singular_name %>).attributes.symbolize_keys
+      end
+      <%- if verb == "create" -%>
+      alias_method :init_setup!, :model_attributes
+      <%- end -%>
+
+      def attributes
+        model_attributes.slice(*schema_attributes).merge({
+          <%- if verb =~ /update|destroy|all/ -%>
+          id: record.uuid,
+          <%- end -%>
+          # TODO: Add attributes here.
+          <%- @reference_parsed_fields.each do |field| -%>
+          <%- case Operations.configuration.primary_key_type -%>
+          <%- when :integer -%>
+          <%= field.foreign_key %>: <%= field.name %>.id,
+          <%- when /string|uuid/ -%>
+          <%= field.foreign_key %>: <%= field.name %>.uuid,
+          <%- end -%>
+          <%- end -%>
+          <%- @regular_parsed_fields.each do |field| -%>
+          <%= field.name %>: "New <%= field.name.capitalize %>",
+          <%- end -%>
+        })
+        skip("Skipping: Please replace with the correct attributes for this test.")
+      end
+
+      def valid_attributes
+        attributes
+      end
+      <%- else -%>
+      def valid_attributes
+        { id: record.uuid }
+      end
+      <%- end -%>
+
+      <%- if verb != "destroy" -%>
+      def invalid_attributes
+        attributes.merge(
+          {
+            # TODO: Add attributes here
+            <%- @reference_parsed_fields.each do |field| -%>
+            <%- case Operations.configuration.primary_key_type -%>
+            <%- when :integer -%>
+            <%= field.foreign_key %>: 42,
+            <%- when /string|uuid/ -%>
+            <%= field.foreign_key %>: SecureRandom.uuid_v7,
+            <%- end -%>
+            <%- end -%>
+            <%- @regular_parsed_fields.each do |field| -%>
+            <%= field.name %>: nil,
+            <%- end -%>
+          }
+        )
+        skip("Skipping: Please replace with the correct attributes for this test.")
+      end
+      <%- end -%>
+
+      <%- if verb != "destroy" -%>
+      def <%= verb %>d_resource
+        <%= class_name %>.last
+      end
+      <%- end -%>
+
+      context "#perform" do
+
+        subject { described_class.new }
+
+        context "success" do
+
+          # Arround the action
+          <%- case verb -%>
+          <%- when "create" -%>
+          should "create the resource" do
+            init_setup! # Ensure the record exists
+            assert_difference "<%= class_name %>.count", +1 do
+              subject.call(valid_attributes)
+            end
+          end
+          <%- when "update" -%>
+          should "update the resource" do
+            assert_changes -> {
+              # record.reload.name
+              <%= class_name %>.find_by(uuid: record.uuid).name
+            }, to: "New Name" do
+              subject.call(valid_attributes)
+            end
+          end
+          <%- when "destroy" -%>
+          should "destroy the resource" do
+            record # Ensure the record exists
+            assert_difference "<%= class_name %>.count", -1 do
+              subject.call(valid_attributes)
+            end
+          end
+          <%- end -%>
+
+          <%- if verb != "destroy" -%>
+          context "when the action is done" do
+
+            setup { subject.call(valid_attributes) }
+
+            should "have done whatever it was meant to do!" do
+              <%- @reference_parsed_fields.each do |field| -%>
+              # assert_equal <%= verb %>d_resource.<%= field.name %>, <%= field.name %>
+              <%- end -%>
+              skip("Skipping: Please replace with the correct assertions for this test.")
+            end
+
+          end
+          <%- end -%>
+
+        end
+
+        <%- if verb != "destroy" -%>
+        context "failure" do
+
+          setup { @operation = -> { subject.call(invalid_attributes) } }
+
+          should "return an unsuccessful result" do
+            result = @operation.call
+
+            assert result.failure?
+            <%- @regular_parsed_fields.select { |f| f.requirement == "required" }.each do |field| -%>
+            # assert_equal({:<%= field.name %> => ["must be filled"]}, result.failure.to_h) # rubocop:disable Rails/DeprecatedActiveModelErrorsMethods
+            <%- end -%>
+            skip("Skipping: Add the correct error messages here.")
+          end
+
+          should "not perform the operation" do
+            # assert_no_changes -> { # whatever } do
+            #   @operation.call
+            # end
+            skip("Skipping: Add the correct check here.")
+          end
+
+        end
+        <%- end -%>
+
+      end
+
+    end
+  end
+end

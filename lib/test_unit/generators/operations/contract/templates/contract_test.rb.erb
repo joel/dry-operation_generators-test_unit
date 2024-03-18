@@ -1,0 +1,113 @@
+# frozen_string_literal: true
+
+require "test_helper"
+
+# Test based on the following contract rules:
+#
+# module <%= class_name.pluralize %>
+#   module <%= verb.capitalize %>
+#     class Contract < Base::Contract
+#
+#       params(Schema)
+#
+#       rule(:user_id) do
+#         key.failure("must exist") if User.where(id: value).none?
+#       end
+#
+#     end
+#   end
+# end
+#
+# Adapt the test to the rules of your contract.
+#
+module <%= class_name.pluralize %>
+  module <%= verb.capitalize %>
+    class ContractTest < ActiveSupport::TestCase
+
+      <%- @reference_parsed_fields.each do |field| -%>
+      def <%= field.name %>
+        @<%= field.name %> ||= create(:<%= field.name %>)
+      end
+
+      <%- end -%>
+      def attributes
+        {
+          # TODO: Add attributes here.
+          <%- @reference_parsed_fields.each do |field| -%>
+          <%- case Operations.configuration.primary_key_type -%>
+          <%- when :integer -%>
+          <%= field.foreign_key %>: <%= field.name %>.id,
+          <%- when /string|uuid/ -%>
+          <%= field.foreign_key %>: <%= field.name %>.uuid,
+          <%- end -%>
+          <%- end -%>
+        }
+        skip("Skipping: Please replace with the correct attributes for this test.")
+      end
+
+      def valid_attributes
+        attributes
+      end
+
+      def invalid_attributes
+        attributes.merge(
+          {
+            # TODO: Add attributes here
+            <%- @reference_parsed_fields.each do |field| -%>
+            <%- case Operations.configuration.primary_key_type -%>
+            <%- when :integer -%>
+            <%= field.foreign_key %>: 42,
+            <%- when /string|uuid/ -%>
+            <%= field.foreign_key %>: SecureRandom.uuid_v7,
+            <%- end -%>
+            <%- end -%>
+          }
+        )
+        skip("Skipping: Please replace with the correct attributes for this test.")
+      end
+
+      # <%= verb.capitalize %>Schema Mock
+      # NOTE: All the keys used for the rules need to be present in the schema.
+      Mocked<%= verb.capitalize %>Schema = Dry::Schema.Params do
+        <%- @reference_parsed_fields.each do |field| -%>
+        <%= field.requirement %>(:<%= field.foreign_key %>).filled(:<%= Operations.configuration.primary_key_type %>)
+        <%- end -%>
+      end
+
+      # Safe Mocking of the <%= verb.capitalize %>Contract
+      class Mocked<%= verb.capitalize %>Contract < ::<%= class_name.pluralize %>::<%= verb.capitalize %>::Contract
+
+        params(Mocked<%= verb.capitalize %>Schema)
+
+      end
+
+      context "validations" do
+
+        subject { Mocked<%= verb.capitalize %>Contract.new }
+
+        context "with the right attributes" do
+
+          should "be successful" do
+            assert subject.call(valid_attributes).success?
+          end
+
+        end
+
+        context "with the wrong attributes" do
+
+          should "be unsuccessful" do
+            result = subject.call(invalid_attributes)
+            assert result.failure?
+            <%- @reference_parsed_fields.each do |field| -%>
+            # assert_equal ["must exist"], result.errors[:<%= field.foreign_key %>]
+            <%- end -%>
+            skip("Skipping: Add the correct error messages here.")
+          end
+
+        end
+
+      end
+
+    end
+  end
+end

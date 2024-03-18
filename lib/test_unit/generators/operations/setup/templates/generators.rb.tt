@@ -1,0 +1,5 @@
+# frozen_string_literal: true
+
+require "test_unit/generators/operations/schema_generator"    if defined?(Dry::Schema)
+require "test_unit/generators/operations/operation_generator" if defined?(Dry::Transaction)
+require "test_unit/generators/operations/contract_generator"  if defined?(Dry::Validation)

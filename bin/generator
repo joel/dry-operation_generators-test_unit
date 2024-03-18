@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+ruby ./lib/test_unit/create_generator.rb "$@"

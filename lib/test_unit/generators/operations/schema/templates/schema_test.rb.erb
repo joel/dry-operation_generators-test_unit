@@ -1,0 +1,93 @@
+# frozen_string_literal: true
+
+require "test_helper"
+
+module <%= class_name.pluralize %>
+  module <%= verb.capitalize %>
+    class SchemaTest < ActiveSupport::TestCase
+
+      # This method should return attributes with the keys as symbols.
+      # symbolize_keys
+      # i.e create(:user).attributes.symbolize_keys
+      def model_attributes
+        # attributes_for(:<%= singular_name %>) # More efficient
+        create(:<%= singular_name %>).attributes.symbolize_keys
+      end
+
+      def attributes
+        model_attributes.merge(
+          schema_attributes
+        ).slice(*described_class.key_list)
+        skip("Skipping: Please replace with the correct attributes for this test.")
+      end
+
+      def schema_attributes
+        {
+          <%- if verb =~ /update|all/ -%>
+          id: SecureRandom.uuid_v7,
+          <%- end -%>
+          # TODO: Add attributes here.
+          <%- @reference_parsed_fields.each do |field| -%>
+          <%- case Operations.configuration.primary_key_type -%>
+          <%- when :integer -%>
+          <%= field.foreign_key %>: 42,
+          <%- when /string|uuid/ -%>
+          <%= field.foreign_key %>: SecureRandom.uuid_v7,
+          <%- end -%>
+          <%- end -%>
+          <%- @regular_parsed_fields.each do |field| -%>
+          <%= field.name %>: "<%= field.type %>",
+          <%- end -%>
+        }
+      end
+
+      def valid_attributes
+        attributes
+      end
+
+      def invalid_attributes
+        attributes.merge(
+          {
+            # TODO: Add attributes here
+            <%- @regular_parsed_fields.select { |f| f.requirement == "required" }.each do |field| -%>
+            # <%= field.name %>: nil,
+            <%- end -%>
+          }
+        )
+        skip("Skipping: Please replace with the correct attributes for this test.")
+      end
+
+      should "not provide attributes that are not defined in the schema" do
+        assert_empty schema_attributes.keys - described_class.key_list
+      end
+
+      context "validations" do
+
+        subject { described_class }
+
+        context "with valid attributes" do
+
+          should "be successful" do
+            assert subject.call(valid_attributes).success?
+          end
+
+        end
+
+        context "with invalid attributes" do
+
+          should "be unsuccessful" do
+            result = subject.call(invalid_attributes)
+            assert result.failure?
+            <%- @regular_parsed_fields.select { |f| f.requirement == "required" }.each do |field| -%>
+            # assert_equal({:<%= field.name %> => ["must be filled"]}, result.errors.to_h) # rubocop:disable Rails/DeprecatedActiveModelErrorsMethods
+            <%- end -%>
+            skip("Skipping: Add the correct error messages here.")
+          end
+
+        end
+
+      end
+
+    end
+  end
+end
