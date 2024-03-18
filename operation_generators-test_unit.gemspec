@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 Gem::Specification.new do |spec|
-  spec.name = "operation_generators-test_unit"
+  spec.name = "dry-operation_generators-test_unit"
   spec.version = "0.1.0"
   spec.authors = ["Joel Azemar"]
   spec.email = ["joel.azemar@gmail.com"]
