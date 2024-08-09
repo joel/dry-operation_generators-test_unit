@@ -2,7 +2,7 @@
 
 source "https://rubygems.org"
 
-# Specify your gem's dependencies in dry_operation_generators_test_unit.gemspec
+# Specify your gem's dependencies in dry-operation_generators-test_unit.gemspec
 gemspec
 
 gem "rubocop-performance"

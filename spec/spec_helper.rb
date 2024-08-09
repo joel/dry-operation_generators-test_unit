@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "dry_operation_generators_test_unit"
+require "dry-operation_generators-test_unit"
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
