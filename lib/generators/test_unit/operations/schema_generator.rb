@@ -3,13 +3,16 @@
 require "rails/generators"
 require "operations/base"
 
-module Operations
+# hook_for :test_framework, as: "operations:schema"
+# "test_unit:operations:schema" => TestUnit::Generators::Operations::SchemaGenerator
+
+module TestUnit
   module Generators
-    module Schema
-      class TestUnitGenerator < Rails::Generators::NamedBase
+    module Operations
+      class SchemaGenerator < Rails::Generators::NamedBase
         include ::Operations::Base::Generators::BaseGenerator
 
-        source_root File.expand_path("templates", __dir__)
+        source_root File.expand_path("schema/templates", __dir__)
 
         desc "Creates a schema test file for the operation"
 

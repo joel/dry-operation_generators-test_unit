@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-module Operations
+module TestUnit
   module Generators
-    module Schema
-      RSpec.describe TestUnitGenerator, type: :generator do
+    module Operations
+      RSpec.describe SchemaGenerator, type: :generator do
         setup_default_destination
 
         tests described_class
