@@ -1,0 +1,25 @@
+# frozen_string_literal: true
+
+require "rails/generators"
+require "operations/base"
+
+module Operations
+  module Generators
+    module Schema
+      class TestUnitGenerator < Rails::Generators::NamedBase
+        include ::Operations::Base::Generators::BaseGenerator
+
+        source_root File.expand_path("templates", __dir__)
+
+        desc "Creates a schema test file for the operation"
+
+        def generate_files
+          super
+
+          template "schema_test.rb.erb", "#{root_test_file_path}/operations/#{plural_name}/#{verb}/schema_test.rb"
+          template "base/schema_test.rb.erb", "#{root_test_file_path}/operations/#{plural_name}/base/schema_test.rb"
+        end
+      end
+    end
+  end
+end

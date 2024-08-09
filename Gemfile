@@ -14,3 +14,6 @@ gem "rake", "~> 13.0"
 gem "rspec", "~> 3.0"
 
 gem "rubocop", "~> 1.21"
+
+gem "dry-operation_generators-base", path: "../../../../Generators/Public/dry-operation_generators-base",
+                                     require: "operations/base"

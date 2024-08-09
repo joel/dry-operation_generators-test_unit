@@ -1,9 +1,3 @@
 # frozen_string_literal: true
 
-require "zeitwerk"
-loader = Zeitwerk::Loader.for_gem
-loader.setup
-
-module DryOperationGeneratorsTestUnit
-  class Error < StandardError; end
-end
+require "generators/operations/schema/test_unit/schema_generator"

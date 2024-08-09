@@ -1,0 +1,73 @@
+# frozen_string_literal: true
+
+require "test_helper"
+
+module <%= class_name.pluralize %>
+  module Base
+    class SchemaTest < ActiveSupport::TestCase
+
+      # This method should return attributes with the keys as symbols.
+      # symbolize_keys
+      def model_attributes
+        # attributes_for(:<%= singular_name %>) # More efficient
+        create(:<%= singular_name %>).attributes.symbolize_keys
+      end
+
+      def attributes
+        model_attributes.merge(
+          schema_attributes
+        ).slice(*described_class.key_list)
+        skip("Skipping: Please replace with the correct attributes for this test.")
+      end
+
+      def schema_attributes
+        {
+          # TODO: Add attributes here.
+        }
+      end
+
+      def valid_attributes
+        attributes
+      end
+
+      def invalid_attributes
+        attributes.merge(
+          {
+            # TODO: Add attributes here
+          }
+        )
+        skip("Skipping: Please replace with the correct attributes for this test.")
+      end
+
+      should "not provide attributes that are not defined in the schema" do
+        assert_empty schema_attributes.keys - described_class.key_list
+      end
+
+      context "validations" do
+
+        subject { described_class }
+
+        context "with valid attributes" do
+
+          should "be successful" do
+            assert subject.call(valid_attributes).success?
+          end
+
+        end
+
+        context "with invalid attributes" do
+
+          should "be unsuccessful" do
+            result = subject.call(invalid_attributes)
+            assert result.failure?
+            # assert_equal({:email => ["must be filled"]}, result.errors.to_h) # rubocop:disable Rails/DeprecatedActiveModelErrorsMethods
+            skip("Skipping: Add the correct error messages here.")
+          end
+
+        end
+
+      end
+
+    end
+  end
+end
